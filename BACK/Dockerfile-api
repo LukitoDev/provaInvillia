@@ -1,0 +1,24 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-bionic AS build-env
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-bionic AS build
+WORKDIR /src
+COPY ["LocaGames.API/LocaGames.API.csproj", "LocaGames.API/"]
+COPY ["LocaGames.Infra.CrossCutting/LocaGames.Infra.CrossCutting.csproj", "LocaGames.Infra.CrossCutting/"]
+COPY ["LocaGames.Services/LocaGames.Service.csproj", "LocaGames.Services/"]
+COPY ["LocaGames.Domain/LocaGames.Domain.csproj", "LocaGames.Domain/"]
+COPY ["LocaGames.Infra.Data/LocaGames.Infra.Data.csproj", "LocaGames.Infra.Data/"]
+COPY ["LocaGames.Infra.Shared/LocaGames.Infra.Shared.csproj", "LocaGames.Infra.Shared/"]
+RUN dotnet restore "LocaGames.API/LocaGames.API.csproj"
+COPY . .
+WORKDIR "/src/LocaGames.API"
+RUN dotnet build "LocaGames.API.csproj" -c Release -o /app
+
+FROM build AS publish
+RUN dotnet publish -c Release --self-contained --runtime linux-x64 -o /app
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-bionic
+WORKDIR /app
+COPY --from=publish /app .
+ENTRYPOINT ["dotnet", "LocaGames.API.dll"]

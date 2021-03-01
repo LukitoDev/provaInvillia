@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "12345678Ab@"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+      
+  api:
+    image: ${DOCKER_REGISTRY-}locagames
+    build:
+      context: ./back
+      dockerfile: Dockerfile-api
+    environment:
+       - ASPNETCORE_URLS=http://+:80
+    ports:
+       - "80:80"
+    container_name: locagames-api
+    depends_on:
+      - db
+
+  vue-ui:
+    build:
+      context: ./front/locagames
+      dockerfile: Dockerfile-front
+    ports:
+      - "8080:8080"
+    container_name: locagames-ui
